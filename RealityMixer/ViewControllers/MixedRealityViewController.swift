@@ -11,12 +11,18 @@ import SwiftSocket
 
 final class MixedRealityViewController: UIViewController {
     private let client: TCPClient
+    private let shouldShowDebug: Bool
     private var displayLink: CADisplayLink?
     private var oculusMRC: OculusMRC?
 
+    @IBOutlet private weak var debugView: UIImageView!
     @IBOutlet private weak var sceneView: ARSCNView!
-
     private var backgroundNode: SCNNode?
+    private var foregroundNode: SCNNode?
+
+    private let flipTransform = SCNMatrix4Translate(SCNMatrix4MakeScale(1, -1, 1), 0, 1, 0)
+
+    var first = true
 
     override var prefersStatusBarHidden: Bool {
         true
@@ -26,8 +32,9 @@ final class MixedRealityViewController: UIViewController {
         true
     }
 
-    init(client: TCPClient) {
+    init(client: TCPClient, shouldShowDebug: Bool) {
         self.client = client
+        self.shouldShowDebug = shouldShowDebug
         super.init(nibName: String(describing: type(of: self)), bundle: Bundle(for: type(of: self)))
     }
 
@@ -37,18 +44,96 @@ final class MixedRealityViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        configureDisplay()
+        configureDisplayLink()
+        configureOculusMRC()
+        configureScene()
+        configureDebugView()
+    }
 
+    private func configureDisplay() {
         UIApplication.shared.isIdleTimerDisabled = true
+    }
 
+    private func configureDisplayLink() {
         let displayLink = CADisplayLink(target: self, selector: #selector(update(with:)))
         displayLink.add(to: .main, forMode: .default)
         self.displayLink = displayLink
+    }
+
+    private func configureOculusMRC() {
         self.oculusMRC = OculusMRC()
         oculusMRC?.delegate = self
+    }
 
+    private func configureScene() {
         let scene = SCNScene()
-//        sceneView.delegate = self
         sceneView.scene = scene
+        sceneView.session.delegate = self
+    }
+
+    private func cameraYScale(from frame: ARFrame) -> Double {
+        let projection = frame.camera.projectionMatrix
+        let yScale = projection[1,1]
+        return Double(yScale)
+    }
+
+    private func planeSizeForDistance(_ distance: Double, frame: ARFrame) -> CGSize {
+        let height = (2.0 * distance)/cameraYScale(from: frame)
+
+        // 16:9 aspect ratio
+        let width = (16.0 * height)/9.0
+        return CGSize(width: width, height: height)
+    }
+
+    private func makePlaneNodeForDistance(_ distance: Double, frame: ARFrame) -> SCNNode {
+        let size = planeSizeForDistance(distance, frame: frame)
+        let plane = SCNPlane(width: size.width, height: size.height)
+        plane.cornerRadius = 0
+        plane.firstMaterial?.lightingModel = .constant
+        plane.firstMaterial?.diffuse.contents = UIColor(red: 0, green: 1, blue: 0, alpha: 1)
+
+        let planeNode = SCNNode(geometry: plane)
+        planeNode.position = .init(0, 0, -distance)
+        return planeNode
+    }
+
+    private func configureBackground(with frame: ARFrame) {
+        let backgroundPlaneNode = makePlaneNodeForDistance(100.0, frame: frame)
+
+        // Flipping image
+        backgroundPlaneNode.geometry?.firstMaterial?.diffuse.contentsTransform = flipTransform
+
+        sceneView.pointOfView?.addChildNode(backgroundPlaneNode)
+        self.backgroundNode = backgroundPlaneNode
+    }
+
+    private func configureForeground(with frame: ARFrame) {
+        let foregroundPlaneNode = makePlaneNodeForDistance(0.1, frame: frame)
+
+        // Flipping image
+        foregroundPlaneNode.geometry?.firstMaterial?.diffuse.contentsTransform = flipTransform
+        foregroundPlaneNode.geometry?.firstMaterial?.transparent.contentsTransform = flipTransform
+
+        foregroundPlaneNode.geometry?.firstMaterial?.transparencyMode = .rgbZero
+
+        // Shader to invert the colors from the transparent texture
+        foregroundPlaneNode.geometry?.firstMaterial?.shaderModifiers = [
+            .surface: """
+            float value = (1.0 - texture2D(u_transparentTexture, _surface.transparentTexcoord).r);
+            _surface.transparent = vec4(value, value, value, 1.0);
+            """
+        ]
+
+        // FIXME: Semi-transparent textures won't work with person segmentation. They'll
+        // blend with the background instead of blending with the segmented image of the person.
+
+        sceneView.pointOfView?.addChildNode(foregroundPlaneNode)
+        self.foregroundNode = foregroundPlaneNode
+    }
+
+    private func configureDebugView() {
+        debugView.isHidden = !shouldShowDebug
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -73,36 +158,11 @@ final class MixedRealityViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        updateScenePlane()
-    }
-
-    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        updateScenePlane()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         sceneView.session.pause()
-    }
-
-    private func updateScenePlane() {
-        // Assuming a 16:9 aspect ratio
-        let plane = SCNPlane(width: 177.777777778, height: 100)
-
-        plane.cornerRadius = 0
-        plane.firstMaterial?.lightingModel = .constant
-        plane.firstMaterial?.diffuse.contents = UIColor(red: 0, green: 1, blue: 0, alpha: 1)
-
-        let planeNode = SCNNode(geometry: plane)
-        planeNode.position = .init(0, 0, -100)
-
-        // Flipping image
-        planeNode.geometry?.firstMaterial?.diffuse.contentsTransform = SCNMatrix4Translate(SCNMatrix4MakeScale(1, -1, 1), 0, 1, 0)
-
-        sceneView.pointOfView?.childNodes.forEach({ $0.removeFromParentNode() })
-        sceneView.pointOfView?.addChildNode(planeNode)
-
-        self.backgroundNode = planeNode
     }
 
     @objc func update(with sender: CADisplayLink) {
@@ -119,8 +179,29 @@ final class MixedRealityViewController: UIViewController {
 }
 
 extension MixedRealityViewController: OculusMRCDelegate {
+    func oculusMRC(
+        _ oculusMRC: OculusMRC,
+        didReceiveBackground background: UIImage,
+        foregroundColor: UIImage,
+        foregroundAlpha: UIImage
+    ) {
+        backgroundNode?.geometry?.firstMaterial?.diffuse.contents = background
+        foregroundNode?.geometry?.firstMaterial?.diffuse.contents = foregroundColor
+        foregroundNode?.geometry?.firstMaterial?.transparent.contents = foregroundAlpha
+    }
 
-    func oculusMRC(_ oculusMRC: OculusMRC, didReceiveNewFrame frame: UIImage) {
-        backgroundNode?.geometry?.firstMaterial?.diffuse.contents = frame
+    func oculusMRC(_ oculusMRC: OculusMRC, didReceive image: UIImage) {
+        debugView.image = image
+    }
+}
+
+extension MixedRealityViewController: ARSessionDelegate {
+
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        if first {
+            configureBackground(with: frame)
+            configureForeground(with: frame)
+            first = false
+        }
     }
 }

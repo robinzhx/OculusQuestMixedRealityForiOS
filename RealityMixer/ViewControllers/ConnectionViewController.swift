@@ -13,6 +13,8 @@ final class ConnectionViewController: UIViewController {
     @IBOutlet private weak var addressTextField: UITextField!
     @IBOutlet private weak var portTextField: UITextField!
     @IBOutlet private weak var showDebugSwitch: UISwitch!
+    @IBOutlet private weak var hardwareDecoderSwitch: UISwitch!
+    @IBOutlet private weak var magentaSwitch: UISwitch!
 
     @IBOutlet private weak var overlayView: UIView!
     private let storage = AddressPortPreferenceStorage()
@@ -64,9 +66,15 @@ final class ConnectionViewController: UIViewController {
         case .success:
             try? storage.save(preference: .init(address: address, port: port))
 
+            let configuration = MixedRealityConfiguration(
+                shouldShowDebug: showDebugSwitch.isOn,
+                shouldUseHardwareDecoder: hardwareDecoderSwitch.isOn,
+                shouldUseMagentaAsTransparency: magentaSwitch.isOn
+            )
+
             let viewController = MixedRealityViewController(
                 client: client,
-                shouldShowDebug: showDebugSwitch.isOn
+                configuration: configuration
             )
 
             viewController.modalPresentationStyle = .overFullScreen

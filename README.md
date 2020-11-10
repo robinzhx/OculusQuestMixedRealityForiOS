@@ -4,8 +4,6 @@
 
 This is a standalone Oculus Quest Mixed Reality app for iOS. It is able to generate VR gameplay videos in Mixed Reality without a PC and without a green screen.
 
-This project is based on the [Oculus MRC plugin for OBS](https://github.com/facebookincubator/obs-plugins/tree/master/oculus-mrc), it uses [SwiftSocket](https://github.com/swiftsocket/SwiftSocket) to handle the TCP connection with the Oculus Quest, FFMPEG with Apple's VideoToolbox to decode the stream, and ARKit for the "virtual green screen". It also requires [Carthage](https://github.com/Carthage/Carthage).
-
 Follow us on [Twitter](https://twitter.com/reality_mixer) for more updates!
 
 ## Examples
@@ -22,20 +20,39 @@ Follow us on [Twitter](https://twitter.com/reality_mixer) for more updates!
  - Oculus Quest 1 or 2 with the [Oculus MRC Calibration app](https://www.oculus.com/experiences/quest/2532132800176262/) version 1.7 installed.
  - iPhone or iPad with an A12 chip or newer, running iOS 14. The LiDAR sensor is optional but recommended for better results.
  - 5 Ghz WiFi network.
- - A compatible VR game (check this [page](https://creator.oculus.com/mrc/) for a list of the officially supported games).
+ - A compatible Quest VR application/game (check this [page](https://creator.oculus.com/mrc/) for a list of the officially supported games).
 
 Note that this is app is still just a prototype and it's still being developed, use at your own risk.
 
 ## Installation
 
+### AltStore
+
+ - Follow [these instructions](https://altstore.io/) to install and configure AltServer on your PC or Mac, then install the AltStore app on your iPhone/iPad.
+ 
+ - Open the camera app on your iPhone/iPad and scan this QR code:
+
+![out](https://user-images.githubusercontent.com/2430631/98624274-57379080-2305-11eb-8c4b-e381dbc8c536.png)
+
+### Test Flight
+
 *Coming soon*
 
 ## Instructions
 
-*Coming soon*
+[Link](Instructions.md)
+
+## Credits
+
+This project is based on the [Oculus MRC plugin for OBS](https://github.com/facebookincubator/obs-plugins/tree/master/oculus-mrc).
+
+It uses [SwiftSocket](https://github.com/swiftsocket/SwiftSocket) to handle the TCP connection with the Oculus Quest, FFMPEG with Apple's VideoToolbox to decode the stream, and ARKit for the "virtual green screen". 
+
+The right and left controller models are modified versions of the `oculus-touch-v3` models from the [WebXR Input Profiles](https://github.com/immersive-web/webxr-input-profiles).
+
+It also requires [Carthage](https://github.com/Carthage/Carthage) to download its dependencies.
 
 ## TO-DOs
 
-- [ ] UI;
+- [ ] Add audio (*Coming Soon*);
 
-- [ ] Add audio (if possible);

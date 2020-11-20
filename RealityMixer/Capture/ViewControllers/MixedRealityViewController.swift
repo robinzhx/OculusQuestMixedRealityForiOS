@@ -7,6 +7,7 @@
 
 import UIKit
 import ARKit
+import AVFoundation
 import SwiftSocket
 
 struct MixedRealityConfiguration {
@@ -14,11 +15,16 @@ struct MixedRealityConfiguration {
 
     // Use magenta as the transparency color for the foreground plane
     let shouldUseMagentaAsTransparency: Bool
+
+    let enableAudio: Bool
+    let shouldFlipOutput: Bool
 }
 
 final class MixedRealityViewController: UIViewController {
     private let client: TCPClient
     private let configuration: MixedRealityConfiguration
+    private var audioEngine: AVAudioEngine?
+    private var audioPlayer: AVAudioPlayerNode?
     private var displayLink: CADisplayLink?
     private var oculusMRC: OculusMRC?
 
@@ -57,6 +63,7 @@ final class MixedRealityViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureDisplay()
+        configureAudio()
         configureDisplayLink()
         configureOculusMRC()
         configureScene()
@@ -68,6 +75,33 @@ final class MixedRealityViewController: UIViewController {
         UIApplication.shared.isIdleTimerDisabled = true
     }
 
+    private func configureAudio() {
+        guard configuration.enableAudio else { return }
+
+        guard let audioFormat = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
+            return
+        }
+
+        let audioEngine = AVAudioEngine()
+        let player = AVAudioPlayerNode()
+        let mainMixerNode = audioEngine.mainMixerNode
+
+        audioEngine.attach(player)
+        audioEngine.connect(player, to: mainMixerNode, format: audioFormat)
+        audioEngine.prepare()
+
+        do {
+            try audioEngine.start()
+            player.play()
+
+            audioEngine.mainMixerNode.outputVolume = 1.0
+            self.audioEngine = audioEngine
+            self.audioPlayer = player
+        } catch {
+            print("Unable to start audio: \(error)")
+        }
+    }
+
     private func configureDisplayLink() {
         let displayLink = CADisplayLink(target: self, selector: #selector(update(with:)))
         displayLink.add(to: .main, forMode: .default)
@@ -75,7 +109,10 @@ final class MixedRealityViewController: UIViewController {
     }
 
     private func configureOculusMRC() {
-        self.oculusMRC = OculusMRC(hardwareDecoder: configuration.shouldUseHardwareDecoder)
+        self.oculusMRC = OculusMRC(
+            hardwareDecoder: configuration.shouldUseHardwareDecoder,
+            enableAudio: configuration.enableAudio
+        )
         oculusMRC?.delegate = self
     }
 
@@ -126,7 +163,9 @@ final class MixedRealityViewController: UIViewController {
         let backgroundPlaneNode = makePlaneNodeForDistance(100.0, frame: frame)
 
         // Flipping image
-        backgroundPlaneNode.geometry?.firstMaterial?.diffuse.contentsTransform = flipTransform
+        if configuration.shouldFlipOutput {
+            backgroundPlaneNode.geometry?.firstMaterial?.diffuse.contentsTransform = flipTransform
+        }
 
         backgroundPlaneNode.geometry?.firstMaterial?.shaderModifiers = [
             .surface: """
@@ -143,8 +182,10 @@ final class MixedRealityViewController: UIViewController {
         let foregroundPlaneNode = makePlaneNodeForDistance(0.1, frame: frame)
 
         // Flipping image
-        foregroundPlaneNode.geometry?.firstMaterial?.diffuse.contentsTransform = flipTransform
-        foregroundPlaneNode.geometry?.firstMaterial?.transparent.contentsTransform = flipTransform
+        if configuration.shouldFlipOutput {
+            foregroundPlaneNode.geometry?.firstMaterial?.diffuse.contentsTransform = flipTransform
+            foregroundPlaneNode.geometry?.firstMaterial?.transparent.contentsTransform = flipTransform
+        }
 
         foregroundPlaneNode.geometry?.firstMaterial?.transparencyMode = .rgbZero
 
@@ -212,7 +253,7 @@ final class MixedRealityViewController: UIViewController {
         } else {
             let parentViewController = presentingViewController
 
-            displayLink?.invalidate()
+            invalidate()
             dismiss(animated: true, completion: { [weak parentViewController] in
 
                 let alert = UIAlertController(title: "Sorry", message: "Mixed Reality capture requires a device with an A12 chip or newer.", preferredStyle: .alert)
@@ -251,7 +292,7 @@ final class MixedRealityViewController: UIViewController {
     }
 
     private func disconnect() {
-        displayLink?.invalidate()
+        invalidate()
         dismiss(animated: false, completion: nil)
     }
 
@@ -277,8 +318,15 @@ final class MixedRealityViewController: UIViewController {
         optionsContainer.isHidden = true
     }
 
-    deinit {
+    func invalidate() {
+        audioPlayer?.stop()
+        audioEngine?.stop()
+        displayLink?.invalidate()
         client.close()
+    }
+
+    deinit {
+        invalidate()
     }
 }
 
@@ -291,8 +339,8 @@ extension MixedRealityViewController: OculusMRCDelegate {
         foregroundNode?.geometry?.firstMaterial?.transparent.contents = image
     }
     
-    func oculusMRC(_ oculusMRC: OculusMRC, didReceive audio: UnsafeMutablePointer<SourceAudio>) {
-        // TODO: Play audio
+    func oculusMRC(_ oculusMRC: OculusMRC, didReceiveAudio audio: AVAudioPCMBuffer) {
+        audioPlayer?.scheduleBuffer(audio, completionHandler: nil)
     }
 
 }

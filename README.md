@@ -4,6 +4,8 @@
 
 This is a standalone Oculus Quest Mixed Reality app for iOS. It is able to generate VR gameplay videos in Mixed Reality without a PC and without a green screen.
 
+Click on [this link](https://testflight.apple.com/join/gyXe6zXG) to join the TestFlight beta, or follow the [instructions](#installation) below to install it using AltStore.
+
 Follow us on [Twitter](https://twitter.com/reality_mixer) for more updates!
 
 ## Examples
@@ -22,7 +24,7 @@ Follow us on [Twitter](https://twitter.com/reality_mixer) for more updates!
  - 5 Ghz WiFi network.
  - A compatible Quest VR application/game (check this [page](https://creator.oculus.com/mrc/) for a list of the officially supported games).
 
-Note that this is app is still just a prototype and it's still being developed, use at your own risk.
+Note that this app is still just a prototype and it's still being developed, use at your own risk.
 
 ## Installation
 
@@ -32,15 +34,47 @@ Note that this is app is still just a prototype and it's still being developed, 
  
  - Open the camera app on your iPhone/iPad and scan this QR code:
 
-![out](https://user-images.githubusercontent.com/2430631/98624274-57379080-2305-11eb-8c4b-e381dbc8c536.png)
+![download](https://user-images.githubusercontent.com/2430631/99197336-ca1f8c00-2789-11eb-8ec0-0d26f0e838a5.png)
 
-### Test Flight
+OR
 
-*Coming soon*
+- Open this URL on your iPhone/iPad:
+
+```
+altstore://install?url=https://github.com/fabio914/OculusQuestMixedRealityForiOS/releases/download/0.1.3/RealityMixer.ipa
+```
+
+### TestFlight
+
+Use [this link](https://testflight.apple.com/join/gyXe6zXG) to join the beta. Limited to the first 10 thousand users.
 
 ## Instructions
 
 [Link](Instructions.md)
+
+## TO-DOs
+
+ - [ ] Optimize the video stream (adopt a lower frame rate if the iPhone/iPad can't keep up with the stream);
+  
+ - [ ] Investigate the audio delay;
+
+ - [ ] Improve the calibration screen and fix the positioning of the controller models;
+ 
+ - [ ] Add a "green screen mode" that will allow the user to use the app with a regular green screen, allowing the app to run on devices without an A12 chip;
+ 
+## Wishlist
+
+These are features that could be implemented in the future:
+
+ - Create a custom calibration app for the Quest to replace the Oculus MRC app, allowing the user to calibrate from VR itself;
+
+ - Use ARKit's body tracking to replace the image from the camera with an avatar;
+ 
+ - Allow the user to adjust the FOV of the mixed reality capture;
+ 
+ - Allow the app to cast the video output (although this should already be possible if you long press the "Screen recording" button on "Control Center" and then select a streaming app);
+ 
+ - Android version;
 
 ## Credits
 
@@ -52,7 +86,8 @@ The right and left controller models are modified versions of the `oculus-touch-
 
 It also requires [Carthage](https://github.com/Carthage/Carthage) to download its dependencies.
 
-## TO-DOs
+## Contributors
 
-- [ ] Add audio (*Coming Soon*);
+[Fabio de A. Dela Antonio](https://github.com/fabio914/)
 
+[Giovanni Longatto N. Marques](https://github.com/gmarques33)

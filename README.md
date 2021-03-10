@@ -1,10 +1,10 @@
 <img src="Images/rounded.png" width="100" />
 
-# Reality Mixer <br/> *Oculus Quest Mixed Reality For iOS*
+# Reality Mixer <br/> *Mixed Reality app for iOS*
 
-This is a standalone Oculus Quest Mixed Reality app for iOS. It is able to generate VR gameplay videos in Mixed Reality without a PC and without a green screen.
+Reality Mixer lets you use your iPhone or iPad to capture your favorite VR games and applications in Mixed Reality without a PC and without a green screen.
 
-Click on [this link](https://testflight.apple.com/join/gyXe6zXG) to join the TestFlight beta, or follow the [instructions](#installation) below to install it using AltStore.
+Click on [this link](https://apps.apple.com/us/app/reality-mixer/id1539307552) to get it from the App Store, or follow the [instructions](#installation) below to install it using alternative methods.
 
 Follow us on [Twitter](https://twitter.com/reality_mixer) for more updates!
 
@@ -21,12 +21,18 @@ Follow us on [Twitter](https://twitter.com/reality_mixer) for more updates!
 
  - Oculus Quest 1 or 2 with the [Oculus MRC Calibration app](https://www.oculus.com/experiences/quest/2532132800176262/) version 1.7 installed.
  - iPhone or iPad with an A12 chip or newer, running iOS 14. The LiDAR sensor is optional but recommended for better results.
- - 5 Ghz WiFi network.
- - A compatible Quest VR application/game (check this [page](https://creator.oculus.com/mrc/) for a list of the officially supported games).
+ - 5 Ghz WiFi network (802.11ac).
+ - A [compatible Quest VR application/game](Compatibility.md).
 
-Note that this app is still just a prototype and it's still being developed, use at your own risk.
+## Compatible Applications/Games
+
+The app is currently only compatible with the Oculus Quest 1 and 2, check this [link](Compatibility.md) for a list of the compatible games/applications.
 
 ## Installation
+
+### App Store
+
+[Link](https://apps.apple.com/us/app/reality-mixer/id1539307552)
 
 ### AltStore
 
@@ -34,14 +40,14 @@ Note that this app is still just a prototype and it's still being developed, use
  
  - Open the camera app on your iPhone/iPad and scan this QR code:
 
-![download](https://user-images.githubusercontent.com/2430631/99197336-ca1f8c00-2789-11eb-8ec0-0d26f0e838a5.png)
+![download](https://user-images.githubusercontent.com/2430631/110265425-6d074a80-7fb3-11eb-8042-5fa3d690d8cb.png)
 
 OR
 
 - Open this URL on your iPhone/iPad:
 
 ```
-altstore://install?url=https://github.com/fabio914/OculusQuestMixedRealityForiOS/releases/download/0.1.3/RealityMixer.ipa
+altstore://install?url=https://github.com/fabio914/RealityMixer/releases/download/0.2.1/RealityMixer.ipa
 ```
 
 ### TestFlight
@@ -54,8 +60,6 @@ Use [this link](https://testflight.apple.com/join/gyXe6zXG) to join the beta. Li
 
 ## TO-DOs
 
- - [ ] Optimize the video stream (adopt a lower frame rate if the iPhone/iPad can't keep up with the stream);
-  
  - [ ] Investigate the audio delay;
 
  - [ ] Improve the calibration screen and fix the positioning of the controller models;
@@ -83,8 +87,6 @@ This project is based on the [Oculus MRC plugin for OBS](https://github.com/face
 It uses [SwiftSocket](https://github.com/swiftsocket/SwiftSocket) to handle the TCP connection with the Oculus Quest, FFMPEG with Apple's VideoToolbox to decode the stream, and ARKit for the "virtual green screen". 
 
 The right and left controller models are modified versions of the `oculus-touch-v3` models from the [WebXR Input Profiles](https://github.com/immersive-web/webxr-input-profiles).
-
-It also requires [Carthage](https://github.com/Carthage/Carthage) to download its dependencies.
 
 ## Contributors
 
